@@ -1,0 +1,153 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "availability": "Ketersediaan",
+    "purchases": "Pembelian",
+    "sales": "Penjualan",
+    "expenses": "Pengeluaran",
+    "income": "Pendapatan Lain",
+    "reports": "Laporan",
+    "settings": "Pengaturan"
+  },
+  "common": {
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "add": "Tambah",
+    "search": "Cari",
+    "loading": "Memuat…",
+    "saving": "Menyimpan…",
+    "deleting": "Menghapus…",
+    "actions": "Aksi",
+    "all": "Semua",
+    "noData": "Tidak ada data",
+    "clearFilters": "Hapus filter",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "showing": "Menampilkan {{from}}–{{to}} dari {{total}}",
+    "optional": "(opsional)",
+    "confirm": "Konfirmasi",
+    "export": "Ekspor CSV",
+    "print": "Cetak",
+    "import": "Import XLSX / CSV",
+    "fromDate": "Dari tanggal",
+    "toDate": "Sampai tanggal",
+    "period": "Periode",
+    "signOut": "Keluar"
+  },
+  "status": {
+    "active": "Aktif",
+    "cancelled": "Dibatalkan",
+    "voided": "Dibatalkan",
+    "outOfStock": "Habis",
+    "lowStock": "Stok Rendah"
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manajer",
+    "viewer": "Pengamat"
+  },
+  "payment": {
+    "cash": "Tunai",
+    "bank_transfer": "Transfer Bank",
+    "credit": "Kredit",
+    "qris": "QRIS"
+  },
+  "availability": {
+    "title": "Ketersediaan",
+    "addItem": "Tambah Barang",
+    "editItem": "Edit Barang",
+    "deleteItem": "Hapus Barang",
+    "addItemDesc": "Tambahkan barang baru ke inventori.",
+    "deleteConfirm": "Yakin ingin menghapus {{name}}? Tindakan ini tidak dapat dibatalkan.",
+    "import": "Import XLSX / CSV",
+    "importDesc": "Kolom wajib: SKU, Nama, Satuan, Qty Akhir.",
+    "importComplete": "Import selesai: {{created}} dibuat, {{updated}} diperbarui",
+    "stockMovement": "Pergerakan Stok",
+    "movementType": "Tipe Pergerakan",
+    "adjustment": "Penyesuaian",
+    "transfer": "Transfer",
+    "production": "Produksi",
+    "waste": "Barang Rusak",
+    "newQty": "Jumlah Baru",
+    "reason": "Alasan",
+    "applyMovement": "Terapkan",
+    "columns": {
+      "sku": "SKU",
+      "name": "Nama",
+      "category": "Kategori",
+      "unit": "Satuan",
+      "purchase": "Pembelian",
+      "sales": "Penjualan",
+      "transfer": "Transfer",
+      "adjustment": "Penyesuaian",
+      "production": "Produksi",
+      "waste": "Barang Rusak",
+      "qtyAkhir": "Qty Akhir"
+    }
+  },
+  "purchases": {
+    "title": "Pembelian",
+    "record": "Catat Pembelian",
+    "recordDesc": "Catat stok masuk. Jumlah produk dan harga pokok akan diperbarui otomatis.",
+    "cancelPurchase": "Batalkan Pembelian",
+    "cancelConfirm": "Yakin? Ini akan menandai pembelian sebagai dibatalkan dan mengembalikan stok.",
+    "cancelSuccess": "Pembelian dibatalkan dan stok dikembalikan",
+    "allStatus": "Semua Status",
+    "columns": {
+      "date": "Tanggal",
+      "status": "Status",
+      "product": "Produk",
+      "supplier": "Supplier",
+      "invoiceNo": "No. Invoice",
+      "qty": "Jumlah",
+      "unitCost": "Harga Satuan",
+      "totalCost": "Total",
+      "payment": "Pembayaran"
+    }
+  },
+  "expenses": {
+    "title": "Pengeluaran",
+    "add": "Tambah Pengeluaran",
+    "edit": "Edit Pengeluaran",
+    "deleteItem": "Hapus Pengeluaran",
+    "deleteConfirm": "Hapus {{name}}? Tindakan ini tidak dapat dibatalkan.",
+    "totalFiltered": "Total (terfilter)",
+    "supplier": "Supplier",
+    "paymentMethod": "Metode Pembayaran",
+    "columns": {
+      "date": "Tanggal",
+      "category": "Kategori",
+      "description": "Deskripsi",
+      "supplier": "Supplier",
+      "payment": "Pembayaran",
+      "amount": "Jumlah"
+    }
+  },
+  "reports": {
+    "title": "Laporan",
+    "today": "Hari Ini",
+    "thisMonth": "Bulan Ini",
+    "thisYear": "Tahun Ini",
+    "custom": "Kustom",
+    "revenue": "Pendapatan",
+    "cogs": "HPP (COGS)",
+    "grossProfit": "Laba Kotor",
+    "grossMargin": "Margin Kotor",
+    "opEx": "Beban Operasional",
+    "otherIncome": "Pendapatan Lain",
+    "netProfit": "Laba Bersih",
+    "costRatio": "Rasio Biaya",
+    "plStatement": "Laporan Laba Rugi",
+    "topProducts": "Produk Terlaris",
+    "expenseBreakdown": "Rincian Pengeluaran",
+    "monthlyTrend": "Tren Bulanan"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "users": "Pengguna",
+    "thresholds": "Ambang Batas",
+    "permissions": "Izin"
+  }
+}

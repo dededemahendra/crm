@@ -6,8 +6,21 @@ import { requireRole } from './lib/auth'
 export const getMyProfile = query({
   args: {},
   handler: async (ctx) => {
-    const authUser = await authComponent.getAuthUser(ctx)
+    // ctx.auth.getUserIdentity() returns null (never throws) when no JWT is present.
+    // This prevents calling getAuthUser when there's no token at all.
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+
+    // getAuthUser can still throw ConvexError("Unauthenticated") when the
+    // Better Auth session is revoked even though the JWT hasn't expired yet.
+    let authUser
+    try {
+      authUser = await authComponent.getAuthUser(ctx)
+    } catch {
+      return null
+    }
     if (!authUser) return null
+
     return ctx.db
       .query('users')
       .withIndex('by_better_auth_id', (q) =>
@@ -55,6 +68,32 @@ export const listUsers = query({
   handler: async (ctx) => {
     await requireRole(ctx, ['admin'])
     return ctx.db.query('users').order('asc').collect()
+  },
+})
+
+/**
+ * One-time bootstrap: promotes a user to admin by email.
+ * Only works when there are NO admins yet.
+ * Run from Convex dashboard → Functions → users:bootstrapAdmin
+ * Args: { "email": "you@example.com" }
+ */
+export const bootstrapAdmin = mutation({
+  args: { email: v.string() },
+  handler: async (ctx, { email }) => {
+    const adminExists = await ctx.db
+      .query('users')
+      .filter((q) => q.eq(q.field('role'), 'admin'))
+      .first()
+    if (adminExists) throw new Error('An admin already exists')
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', email))
+      .first()
+    if (!user) throw new Error(`No user found with email: ${email}`)
+
+    await ctx.db.patch(user._id, { role: 'admin' })
+    return user._id
   },
 })
 

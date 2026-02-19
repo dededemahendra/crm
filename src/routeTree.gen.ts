@@ -17,10 +17,10 @@ import { Route as ProtectedSettingsRouteImport } from './routes/_protected/setti
 import { Route as ProtectedSalesRouteImport } from './routes/_protected/sales'
 import { Route as ProtectedReportsRouteImport } from './routes/_protected/reports'
 import { Route as ProtectedPurchasesRouteImport } from './routes/_protected/purchases'
-import { Route as ProtectedProductsRouteImport } from './routes/_protected/products'
 import { Route as ProtectedIncomeRouteImport } from './routes/_protected/income'
 import { Route as ProtectedExpensesRouteImport } from './routes/_protected/expenses'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
+import { Route as ProtectedAvailabilityRouteImport } from './routes/_protected/availability'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -62,11 +62,6 @@ const ProtectedPurchasesRoute = ProtectedPurchasesRouteImport.update({
   path: '/purchases',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedProductsRoute = ProtectedProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedIncomeRoute = ProtectedIncomeRouteImport.update({
   id: '/income',
   path: '/income',
@@ -82,6 +77,11 @@ const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedAvailabilityRoute = ProtectedAvailabilityRouteImport.update({
+  id: '/availability',
+  path: '/availability',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -92,10 +92,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/availability': typeof ProtectedAvailabilityRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/expenses': typeof ProtectedExpensesRoute
   '/income': typeof ProtectedIncomeRoute
-  '/products': typeof ProtectedProductsRoute
   '/purchases': typeof ProtectedPurchasesRoute
   '/reports': typeof ProtectedReportsRoute
   '/sales': typeof ProtectedSalesRoute
@@ -106,10 +106,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/availability': typeof ProtectedAvailabilityRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/expenses': typeof ProtectedExpensesRoute
   '/income': typeof ProtectedIncomeRoute
-  '/products': typeof ProtectedProductsRoute
   '/purchases': typeof ProtectedPurchasesRoute
   '/reports': typeof ProtectedReportsRoute
   '/sales': typeof ProtectedSalesRoute
@@ -122,10 +122,10 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_protected/availability': typeof ProtectedAvailabilityRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/expenses': typeof ProtectedExpensesRoute
   '/_protected/income': typeof ProtectedIncomeRoute
-  '/_protected/products': typeof ProtectedProductsRoute
   '/_protected/purchases': typeof ProtectedPurchasesRoute
   '/_protected/reports': typeof ProtectedReportsRoute
   '/_protected/sales': typeof ProtectedSalesRoute
@@ -138,10 +138,10 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/availability'
     | '/dashboard'
     | '/expenses'
     | '/income'
-    | '/products'
     | '/purchases'
     | '/reports'
     | '/sales'
@@ -152,10 +152,10 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/availability'
     | '/dashboard'
     | '/expenses'
     | '/income'
-    | '/products'
     | '/purchases'
     | '/reports'
     | '/sales'
@@ -167,10 +167,10 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/login'
     | '/register'
+    | '/_protected/availability'
     | '/_protected/dashboard'
     | '/_protected/expenses'
     | '/_protected/income'
-    | '/_protected/products'
     | '/_protected/purchases'
     | '/_protected/reports'
     | '/_protected/sales'
@@ -244,13 +244,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPurchasesRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/products': {
-      id: '/_protected/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProtectedProductsRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/income': {
       id: '/_protected/income'
       path: '/income'
@@ -272,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/availability': {
+      id: '/_protected/availability'
+      path: '/availability'
+      fullPath: '/availability'
+      preLoaderRoute: typeof ProtectedAvailabilityRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -283,10 +283,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedRouteChildren {
+  ProtectedAvailabilityRoute: typeof ProtectedAvailabilityRoute
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedExpensesRoute: typeof ProtectedExpensesRoute
   ProtectedIncomeRoute: typeof ProtectedIncomeRoute
-  ProtectedProductsRoute: typeof ProtectedProductsRoute
   ProtectedPurchasesRoute: typeof ProtectedPurchasesRoute
   ProtectedReportsRoute: typeof ProtectedReportsRoute
   ProtectedSalesRoute: typeof ProtectedSalesRoute
@@ -294,10 +294,10 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedAvailabilityRoute: ProtectedAvailabilityRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedExpensesRoute: ProtectedExpensesRoute,
   ProtectedIncomeRoute: ProtectedIncomeRoute,
-  ProtectedProductsRoute: ProtectedProductsRoute,
   ProtectedPurchasesRoute: ProtectedPurchasesRoute,
   ProtectedReportsRoute: ProtectedReportsRoute,
   ProtectedSalesRoute: ProtectedSalesRoute,

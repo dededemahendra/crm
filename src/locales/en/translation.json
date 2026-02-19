@@ -1,0 +1,153 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "availability": "Availability",
+    "purchases": "Purchases",
+    "sales": "Sales",
+    "expenses": "Expenses",
+    "income": "Other Income",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "deleting": "Deleting…",
+    "actions": "Actions",
+    "all": "All",
+    "noData": "No data",
+    "clearFilters": "Clear filters",
+    "previous": "Previous",
+    "next": "Next",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "optional": "(optional)",
+    "confirm": "Confirm",
+    "export": "Export CSV",
+    "print": "Print",
+    "import": "Import XLSX / CSV",
+    "fromDate": "From date",
+    "toDate": "To date",
+    "period": "Period",
+    "signOut": "Sign out"
+  },
+  "status": {
+    "active": "Active",
+    "cancelled": "Cancelled",
+    "voided": "Voided",
+    "outOfStock": "Out of stock",
+    "lowStock": "Low stock"
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "viewer": "Viewer"
+  },
+  "payment": {
+    "cash": "Cash",
+    "bank_transfer": "Bank Transfer",
+    "credit": "Credit",
+    "qris": "QRIS"
+  },
+  "availability": {
+    "title": "Availability",
+    "addItem": "Add Item",
+    "editItem": "Edit Item",
+    "deleteItem": "Delete Item",
+    "addItemDesc": "Add a new item to the inventory.",
+    "deleteConfirm": "Are you sure you want to delete {{name}}? This cannot be undone.",
+    "import": "Import XLSX / CSV",
+    "importDesc": "Required columns: SKU, Nama, Satuan, Qty Akhir.",
+    "importComplete": "Import complete: {{created}} created, {{updated}} updated",
+    "stockMovement": "Stock Movement",
+    "movementType": "Movement Type",
+    "adjustment": "Adjustment",
+    "transfer": "Transfer",
+    "production": "Production",
+    "waste": "Waste Goods",
+    "newQty": "New Quantity",
+    "reason": "Reason",
+    "applyMovement": "Apply",
+    "columns": {
+      "sku": "SKU",
+      "name": "Name",
+      "category": "Category",
+      "unit": "Unit",
+      "purchase": "Purchase",
+      "sales": "Sales",
+      "transfer": "Transfer",
+      "adjustment": "Adjustment",
+      "production": "Production",
+      "waste": "Waste",
+      "qtyAkhir": "Final Qty"
+    }
+  },
+  "purchases": {
+    "title": "Purchases",
+    "record": "Record Purchase",
+    "recordDesc": "Record incoming stock. Product quantity and unit cost will be updated automatically.",
+    "cancelPurchase": "Cancel Purchase",
+    "cancelConfirm": "Are you sure? This will mark the purchase as cancelled and revert the stock quantity.",
+    "cancelSuccess": "Purchase cancelled and stock reverted",
+    "allStatus": "All Status",
+    "columns": {
+      "date": "Date",
+      "status": "Status",
+      "product": "Product",
+      "supplier": "Supplier",
+      "invoiceNo": "Invoice No",
+      "qty": "Qty",
+      "unitCost": "Unit Cost",
+      "totalCost": "Total Cost",
+      "payment": "Payment"
+    }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "add": "Add Expense",
+    "edit": "Edit Expense",
+    "deleteItem": "Delete Expense",
+    "deleteConfirm": "Delete {{name}}? This cannot be undone.",
+    "totalFiltered": "Total (filtered)",
+    "supplier": "Supplier",
+    "paymentMethod": "Payment Method",
+    "columns": {
+      "date": "Date",
+      "category": "Category",
+      "description": "Description",
+      "supplier": "Supplier",
+      "payment": "Payment",
+      "amount": "Amount"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "today": "Today",
+    "thisMonth": "This Month",
+    "thisYear": "This Year",
+    "custom": "Custom",
+    "revenue": "Revenue",
+    "cogs": "COGS",
+    "grossProfit": "Gross Profit",
+    "grossMargin": "Gross Margin",
+    "opEx": "Operating Expenses",
+    "otherIncome": "Other Income",
+    "netProfit": "Net Profit",
+    "costRatio": "Cost Ratio",
+    "plStatement": "P&L Statement",
+    "topProducts": "Top Products by Revenue",
+    "expenseBreakdown": "Expense Breakdown",
+    "monthlyTrend": "Monthly Trend"
+  },
+  "settings": {
+    "title": "Settings",
+    "users": "Users",
+    "thresholds": "Thresholds",
+    "permissions": "Permissions"
+  }
+}

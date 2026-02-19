@@ -1,6 +1,15 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
+const paymentMethod = v.optional(
+  v.union(
+    v.literal('cash'),
+    v.literal('bank_transfer'),
+    v.literal('credit'),
+    v.literal('qris'),
+  ),
+)
+
 export default defineSchema({
   users: defineTable({
     betterAuthId: v.string(),
@@ -36,6 +45,10 @@ export default defineSchema({
     supplier: v.string(),
     invoiceNo: v.optional(v.string()),
     date: v.number(),
+    status: v.optional(
+      v.union(v.literal('active'), v.literal('cancelled')),
+    ),
+    paymentMethod,
     createdBy: v.string(),
     createdAt: v.number(),
   }).index('by_date', ['date']),
@@ -57,7 +70,9 @@ export default defineSchema({
     category: v.string(),
     amount: v.number(),
     description: v.string(),
+    supplier: v.optional(v.string()),
     date: v.number(),
+    paymentMethod,
     createdBy: v.string(),
     createdAt: v.number(),
   }).index('by_date', ['date']),
@@ -74,4 +89,21 @@ export default defineSchema({
     taxRate: v.number(), // percentage, e.g. 11 for 11%
     expenseCategories: v.array(v.string()),
   }),
+
+  stockMovements: defineTable({
+    productId: v.id('products'),
+    type: v.union(
+      v.literal('adjustment'),
+      v.literal('transfer'),
+      v.literal('production'),
+      v.literal('waste'),
+    ),
+    qty: v.number(), // positive = stock in, negative = stock out
+    reason: v.optional(v.string()),
+    date: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_product', ['productId'])
+    .index('by_date', ['date']),
 })

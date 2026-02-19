@@ -18,6 +18,7 @@ import { authClient } from '@/lib/auth-client'
 import { getToken } from '@/lib/auth-server'
 
 import appCss from '../styles.css?url'
+import '@/lib/i18n'
 
 interface MyRouterContext {
   queryClient: QueryClient

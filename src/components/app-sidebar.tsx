@@ -12,8 +12,10 @@ import {
   LogOut,
   Menu,
   Settings2,
+  Globe,
 } from 'lucide-react'
 import { useQuery } from 'convex/react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../../convex/_generated/api'
 import { signOut, useSession } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
@@ -26,52 +28,52 @@ type Role = 'admin' | 'manager' | 'viewer'
 
 const NAV_ITEMS = [
   {
-    label: 'Dashboard',
+    labelKey: 'nav.dashboard' as const,
     to: '/dashboard',
     icon: LayoutDashboard,
     roles: ['admin', 'manager', 'viewer'] as Role[],
   },
   {
-    label: 'Products',
-    to: '/products',
+    labelKey: 'nav.availability' as const,
+    to: '/availability',
     icon: Package,
     roles: ['admin', 'manager', 'viewer'] as Role[],
   },
   {
-    label: 'Purchases',
+    labelKey: 'nav.purchases' as const,
     to: '/purchases',
     icon: ShoppingCart,
     roles: ['admin', 'manager'] as Role[],
   },
   {
-    label: 'Sales',
+    labelKey: 'nav.sales' as const,
     to: '/sales',
     icon: TrendingUp,
     roles: ['admin', 'manager'] as Role[],
   },
   {
-    label: 'Expenses',
+    labelKey: 'nav.expenses' as const,
     to: '/expenses',
     icon: Receipt,
     roles: ['admin', 'manager'] as Role[],
   },
   {
-    label: 'Other Income',
+    labelKey: 'nav.income' as const,
     to: '/income',
     icon: CircleDollarSign,
     roles: ['admin', 'manager'] as Role[],
   },
   {
-    label: 'Reports',
+    labelKey: 'nav.reports' as const,
     to: '/reports',
     icon: BarChart3,
     roles: ['admin', 'manager', 'viewer'] as Role[],
   },
-] as const
+]
 
 const ADMIN_ITEMS = [
-  { label: 'Settings', to: '/settings', icon: Settings2 },
-] as const
+  { labelKey: 'nav.settings' as const, to: '/settings', icon: Settings2 },
+]
 
 const ROLE_BADGE: Record<Role, 'default' | 'secondary' | 'outline'> = {
   admin: 'default',
@@ -87,6 +89,7 @@ interface SidebarContentProps {
 function SidebarContent({ role, onNavClick }: SidebarContentProps) {
   const { data: session } = useSession()
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
 
   const visibleNav = NAV_ITEMS.filter((item) => item.roles.includes(role))
   const showAdmin = role === 'admin'
@@ -94,6 +97,10 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
   async function handleSignOut() {
     await signOut()
     void navigate({ to: '/login' })
+  }
+
+  function toggleLanguage() {
+    void i18n.changeLanguage(i18n.language === 'id' ? 'en' : 'id')
   }
 
   return (
@@ -104,7 +111,19 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
           <CoffeeIcon className="size-5 text-sidebar-primary" />
           <span className="font-semibold text-sm">Cafe CRM</span>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 gap-1 text-xs font-medium"
+            onClick={toggleLanguage}
+            title={i18n.language === 'id' ? 'Switch to English' : 'Ganti ke Indonesia'}
+          >
+            <Globe className="size-3.5" />
+            {i18n.language === 'id' ? 'ID' : 'EN'}
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Nav */}
@@ -121,7 +140,7 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
             }}
           >
             <item.icon className="size-4 shrink-0" />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         ))}
 
@@ -130,7 +149,7 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
             <Separator className="my-2 bg-sidebar-border" />
             {ADMIN_ITEMS.map((item) => (
               <Link
-                key={item.label}
+                key={item.to}
                 to={item.to}
                 onClick={onNavClick}
                 className="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -140,7 +159,7 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
                 }}
               >
                 <item.icon className="size-4 shrink-0" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </>
@@ -159,7 +178,7 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
             </p>
           </div>
           <Badge variant={ROLE_BADGE[role]} className="text-xs shrink-0">
-            {role}
+            {t(`roles.${role}`)}
           </Badge>
         </div>
         <Button
@@ -169,7 +188,7 @@ function SidebarContent({ role, onNavClick }: SidebarContentProps) {
           onClick={() => void handleSignOut()}
         >
           <LogOut className="size-4" />
-          Sign out
+          {t('common.signOut')}
         </Button>
       </div>
     </div>

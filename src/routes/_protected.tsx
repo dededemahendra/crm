@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { useMutation } from 'convex/react'
+import { useMutation, Authenticated } from 'convex/react'
+import { toast } from 'sonner'
 import { api } from '../../convex/_generated/api'
 import { useSession } from '@/lib/auth-client'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -9,25 +10,30 @@ export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
 })
 
+/** Runs provisionMe only after Convex confirms the JWT is set */
+function ProvisionUser({ name, email }: { name: string; email: string }) {
+  const provisionMe = useMutation(api.users.provisionMe)
+
+  useEffect(() => {
+    provisionMe({ name, email }).catch((e: unknown) => {
+      toast.error(`Account setup failed: ${String(e)}`)
+      console.error('provisionMe error:', e)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return null
+}
+
 function ProtectedLayout() {
   const { data: session, isPending } = useSession()
   const navigate = useNavigate()
-  const provisionMe = useMutation(api.users.provisionMe)
 
   useEffect(() => {
     if (!isPending && !session) {
       void navigate({ to: '/login' })
     }
   }, [session, isPending, navigate])
-
-  useEffect(() => {
-    if (session) {
-      void provisionMe({
-        name: session.user.name,
-        email: session.user.email,
-      })
-    }
-  }, [session, provisionMe])
 
   if (isPending) {
     return (
@@ -43,6 +49,9 @@ function ProtectedLayout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Authenticated>
+        <ProvisionUser name={session.user.name} email={session.user.email} />
+      </Authenticated>
       <AppSidebar />
       <main className="md:pl-60 print:pl-0">
         <Outlet />

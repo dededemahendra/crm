@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
+import { useTranslation } from 'react-i18next'
 import {
   format,
   startOfDay, endOfDay,
@@ -88,11 +89,13 @@ function Bar({ value, max, className }: { value: number; max: number; className?
 function KPICard({
   label,
   value,
+  suffix,
   highlight,
   isLoading,
 }: {
   label: string
   value: number
+  suffix?: string
   highlight?: 'positive' | 'negative'
   isLoading?: boolean
 }) {
@@ -111,7 +114,7 @@ function KPICard({
                 : ''
           }`}
         >
-          {fmtNumber(value)}
+          {fmtNumber(value)}{suffix ?? ''}
         </p>
       )}
     </div>
@@ -121,26 +124,27 @@ function KPICard({
 // ─── P&L Statement ───────────────────────────────────────────────────────────
 
 function PLStatement({ metrics }: { metrics: ReturnType<typeof computeMetrics> }) {
+  const { t } = useTranslation()
   const rows: { label: string; value: number; indent?: boolean; bold?: boolean; separator?: boolean }[] = [
-    { label: 'Revenue (Sales)', value: metrics.revenue },
-    { label: 'Other Income', value: metrics.otherIncomeTotal },
+    { label: `${t('reports.revenue')} (Sales)`, value: metrics.revenue },
+    { label: t('reports.otherIncome'), value: metrics.otherIncomeTotal },
     { label: 'Total Income', value: metrics.totalIncome, bold: true, separator: true },
-    { label: 'Cost of Goods Sold (COGS)', value: -metrics.cogs, indent: true },
-    { label: 'Gross Profit', value: metrics.grossProfit, bold: true, separator: true },
-    { label: 'Operating Expenses', value: -metrics.opExTotal, indent: true },
+    { label: `${t('reports.cogs')}`, value: -metrics.cogs, indent: true },
+    { label: t('reports.grossProfit'), value: metrics.grossProfit, bold: true, separator: true },
+    { label: t('reports.opEx'), value: -metrics.opExTotal, indent: true },
     { label: 'Operating Income', value: metrics.operatingIncome, bold: true, separator: true },
-    { label: 'Other Income', value: metrics.otherIncomeTotal, indent: true },
+    { label: t('reports.otherIncome'), value: metrics.otherIncomeTotal, indent: true },
     { label: 'Profit Before Tax', value: metrics.profitBeforeTax, bold: true, separator: true },
     ...(metrics.taxRate > 0
       ? [{ label: `Tax (${metrics.taxRate}%)`, value: -metrics.tax, indent: true }]
       : []),
-    { label: 'Net Profit', value: metrics.netProfit, bold: true, separator: true },
+    { label: t('reports.netProfit'), value: metrics.netProfit, bold: true, separator: true },
   ]
 
   return (
     <div className="rounded-lg border overflow-hidden">
       <div className="bg-muted/50 px-4 py-2.5 border-b">
-        <h2 className="font-semibold text-sm">P&L Statement</h2>
+        <h2 className="font-semibold text-sm">{t('reports.plStatement')}</h2>
       </div>
       <div className="divide-y">
         {rows.map((row, i) => (
@@ -186,7 +190,6 @@ function computeMetrics(
   const netProfit = profitBeforeTax - tax
   const totalIncome = revenue + otherIncomeTotal
 
-  // Top products by revenue
   const productMap = new Map<string, { name: string; sku: string; revenue: number; qty: number }>()
   data.sales.forEach((s) => {
     const existing = productMap.get(s.productId) ?? { name: s.productName, sku: s.productSku, revenue: 0, qty: 0 }
@@ -194,7 +197,6 @@ function computeMetrics(
   })
   const topProducts = [...productMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5)
 
-  // Expense breakdown by category
   const catMap = new Map<string, number>()
   data.expenses.forEach((e) => {
     catMap.set(e.category, (catMap.get(e.category) ?? 0) + e.amount)
@@ -203,7 +205,6 @@ function computeMetrics(
     .map(([category, amount]) => ({ category, amount }))
     .sort((a, b) => b.amount - a.amount)
 
-  // Monthly trend (group by yyyy-MM for ordering, display as MMM yy)
   const monthMap = new Map<string, { label: string; revenue: number; cogs: number; expenses: number }>()
   data.sales.forEach((s) => {
     const key = format(new Date(s.date), 'yyyy-MM')
@@ -221,26 +222,31 @@ function computeMetrics(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, v]) => v)
 
+  const grossMarginPct = revenue > 0 ? (grossProfit / revenue) * 100 : 0
+  const costRatioPct = revenue > 0 ? (cogs / revenue) * 100 : 0
+
   return {
     revenue, cogs, grossProfit, opExTotal, operatingIncome,
     otherIncomeTotal, profitBeforeTax, tax, taxRate, netProfit, totalIncome,
+    grossMarginPct, costRatioPct,
     topProducts, expenseByCategory, monthlyTrend,
   }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const PERIOD_LABELS: Record<Period, string> = {
-  today: 'Today',
-  month: 'This Month',
-  year: 'This Year',
-  custom: 'Custom',
-}
-
 function ReportsPage() {
+  const { t } = useTranslation()
   const [period, setPeriod] = useState<Period>('month')
   const [customFrom, setCustomFrom] = useState<Date | undefined>()
   const [customTo, setCustomTo] = useState<Date | undefined>()
+
+  const PERIOD_LABELS: Record<Period, string> = {
+    today: t('reports.today'),
+    month: t('reports.thisMonth'),
+    year: t('reports.thisYear'),
+    custom: t('reports.custom'),
+  }
 
   const { start, end } = useMemo(
     () => getPeriodDates(period, customFrom, customTo),
@@ -302,17 +308,17 @@ function ReportsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Reports</h1>
+          <h1 className="text-2xl font-bold">{t('reports.title')}</h1>
           <p className="text-muted-foreground text-sm mt-1">{periodLabel}</p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
           <Button variant="outline" onClick={() => window.print()} disabled={!metrics} className="shrink-0">
             <PrinterIcon className="size-4 mr-2" />
-            Print
+            {t('common.print')}
           </Button>
           <Button variant="outline" onClick={handleExport} disabled={!metrics} className="shrink-0">
             <DownloadIcon className="size-4 mr-2" />
-            Export CSV
+            {t('common.export')}
           </Button>
         </div>
       </div>
@@ -336,7 +342,7 @@ function ReportsPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <CalendarIcon className="size-3.5 opacity-50" />
-                  {customFrom ? format(customFrom, 'dd MMM yyyy') : 'From date'}
+                  {customFrom ? format(customFrom, 'dd MMM yyyy') : t('common.fromDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -352,7 +358,7 @@ function ReportsPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <CalendarIcon className="size-3.5 opacity-50" />
-                  {customTo ? format(customTo, 'dd MMM yyyy') : 'To date'}
+                  {customTo ? format(customTo, 'dd MMM yyyy') : t('common.toDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -370,21 +376,34 @@ function ReportsPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <KPICard label="Revenue" value={metrics?.revenue ?? 0} isLoading={isLoading} />
-        <KPICard label="COGS" value={metrics?.cogs ?? 0} isLoading={isLoading} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KPICard label={t('reports.revenue')} value={metrics?.revenue ?? 0} isLoading={isLoading} />
+        <KPICard label={t('reports.cogs')} value={metrics?.cogs ?? 0} isLoading={isLoading} />
         <KPICard
-          label="Gross Profit"
+          label={t('reports.grossProfit')}
           value={metrics?.grossProfit ?? 0}
           highlight={(metrics?.grossProfit ?? 0) >= 0 ? 'positive' : 'negative'}
           isLoading={isLoading}
         />
-        <KPICard label="Operating Expenses" value={metrics?.opExTotal ?? 0} isLoading={isLoading} />
-        <KPICard label="Other Income" value={metrics?.otherIncomeTotal ?? 0} isLoading={isLoading} />
         <KPICard
-          label="Net Profit"
+          label={t('reports.grossMargin')}
+          value={Math.round(metrics?.grossMarginPct ?? 0)}
+          suffix="%"
+          highlight={(metrics?.grossMarginPct ?? 0) >= 0 ? 'positive' : 'negative'}
+          isLoading={isLoading}
+        />
+        <KPICard label={t('reports.opEx')} value={metrics?.opExTotal ?? 0} isLoading={isLoading} />
+        <KPICard label={t('reports.otherIncome')} value={metrics?.otherIncomeTotal ?? 0} isLoading={isLoading} />
+        <KPICard
+          label={t('reports.netProfit')}
           value={metrics?.netProfit ?? 0}
           highlight={(metrics?.netProfit ?? 0) >= 0 ? 'positive' : 'negative'}
+          isLoading={isLoading}
+        />
+        <KPICard
+          label={t('reports.costRatio')}
+          value={Math.round(metrics?.costRatioPct ?? 0)}
+          suffix="%"
           isLoading={isLoading}
         />
       </div>
@@ -407,7 +426,7 @@ function ReportsPage() {
             {/* Top Products */}
             <div className="rounded-lg border overflow-hidden">
               <div className="bg-muted/50 px-4 py-2.5 border-b">
-                <h2 className="font-semibold text-sm">Top Products by Revenue</h2>
+                <h2 className="font-semibold text-sm">{t('reports.topProducts')}</h2>
               </div>
               <div className="p-4">
                 {metrics.topProducts.length === 0 ? (
@@ -446,7 +465,7 @@ function ReportsPage() {
             {/* Expense Breakdown */}
             <div className="rounded-lg border overflow-hidden">
               <div className="bg-muted/50 px-4 py-2.5 border-b">
-                <h2 className="font-semibold text-sm">Expense Breakdown</h2>
+                <h2 className="font-semibold text-sm">{t('reports.expenseBreakdown')}</h2>
               </div>
               <div className="p-4">
                 {metrics.expenseByCategory.length === 0 ? (
@@ -481,21 +500,21 @@ function ReportsPage() {
             </div>
           </div>
 
-          {/* Monthly Trend (only meaningful for year/custom spanning multiple months) */}
+          {/* Monthly Trend */}
           {metrics.monthlyTrend.length > 1 && (
             <div className="rounded-lg border overflow-hidden">
               <div className="bg-muted/50 px-4 py-2.5 border-b">
-                <h2 className="font-semibold text-sm">Monthly Trend</h2>
+                <h2 className="font-semibold text-sm">{t('reports.monthlyTrend')}</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
                       <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Month</th>
-                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Revenue</th>
-                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">COGS</th>
-                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">OpEx</th>
-                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Gross Profit</th>
+                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">{t('reports.revenue')}</th>
+                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">{t('reports.cogs')}</th>
+                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">{t('reports.opEx')}</th>
+                      <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">{t('reports.grossProfit')}</th>
                       <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Net</th>
                     </tr>
                   </thead>
@@ -525,7 +544,7 @@ function ReportsPage() {
           {data.sales.length === 0 && data.expenses.length === 0 && data.otherIncome.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground rounded-lg border">
               <BarChart3Icon className="size-10 opacity-30" />
-              <p className="text-sm">No data for this period</p>
+              <p className="text-sm">{t('common.noData')}</p>
             </div>
           )}
         </>
