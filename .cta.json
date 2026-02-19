@@ -1,0 +1,26 @@
+{
+  "projectName": "cafe-crm",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "pnpm",
+  "includeExamples": false,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {
+    "CONVEX_DEPLOYMENT": "cafe-crm",
+    "VITE_CONVEX_URL": "cafe-crm"
+  },
+  "git": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react-cra",
+  "chosenAddOns": [
+    "eslint",
+    "netlify",
+    "convex",
+    "shadcn",
+    "better-auth",
+    "tanstack-query",
+    "form"
+  ]
+}

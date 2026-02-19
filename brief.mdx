@@ -1,0 +1,419 @@
+# CRM Dashboard – Stock & Revenue Analytics
+
+> **Stack:** · TanStack · shadcn/ui · Convex · Better Auth  
+> **Version:** 1.0 · 2026
+
+---
+
+## Overview
+
+A full-featured CRM dashboard for managing stock, purchases, sales, and financial reporting. Built with a reactive Convex backend and role-based access control via Better Auth.
+
+---
+
+## Role-Based Access Control
+
+The system uses **Better Auth** with three roles. All server-side mutations enforce role checks via Convex.
+
+| Role    | Access Level                                                      |
+| ------- | ----------------------------------------------------------------- |
+| `admin` | Full access: user management, all CRUD, reports, threshold config |
+
+### Admin Role Setup
+
+#### 1. Install Better Auth
+
+```bash
+npm install better-auth
+```
+
+#### 2. Configure Auth with Admin Role (`lib/auth.ts`)
+
+```ts
+import { betterAuth } from 'better-auth'
+import { admin } from 'better-auth/plugins'
+import { convexAdapter } from '@better-auth/convex' // community adapter
+
+export const auth = betterAuth({
+  database: convexAdapter(), // connects to your Convex tables
+  plugins: [
+    admin({
+      defaultRole: 'viewer', // all new users start as viewer
+      adminRoles: ['admin'], // roles treated as admin
+      roles: ['admin', 'manager', 'viewer'],
+    }),
+  ],
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // refresh if older than 1 day
+  },
+})
+
+export type Session = typeof auth.$Infer.Session
+```
+
+#### 3. Create Auth Route Handler (`app/api/auth/[...all]/route.ts`)
+
+```ts
+import { auth } from '@/lib/auth'
+import { toNextJsHandler } from 'better-auth/next-js'
+
+export const { GET, POST } = toNextJsHandler(auth)
+```
+
+#### 4. Auth Client (`lib/auth-client.ts`)
+
+```ts
+import { createAuthClient } from 'better-auth/react'
+import { adminClient } from 'better-auth/client/plugins'
+
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_APP_URL!,
+  plugins: [adminClient()],
+})
+
+export const { signIn, signOut, signUp, useSession } = authClient
+```
+
+---
+
+## Protecting Routes
+
+### Middleware (`middleware.ts`)
+
+```ts
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+
+const PUBLIC_ROUTES = ['/login', '/register']
+
+export async function middleware(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+
+  const isPublic = PUBLIC_ROUTES.some((r) =>
+    request.nextUrl.pathname.startsWith(r),
+  )
+
+  if (!session && !isPublic) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/((?!_next|api/auth|favicon.ico).*)'],
+}
+```
+
+### Admin-Only Route Guard (`components/admin-guard.tsx`)
+
+```tsx
+'use client'
+
+import { useSession } from '@/lib/auth-client'
+import { redirect } from 'next/navigation'
+
+export function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { data: session, isPending } = useSession()
+
+  if (isPending)
+    return <div className="p-8 text-muted-foreground">Loading...</div>
+
+  if (!session || session.user.role !== 'admin') {
+    redirect('/dashboard')
+  }
+
+  return <>{children}</>
+}
+```
+
+**Usage in an admin-only page:**
+
+```tsx
+// app/settings/page.tsx
+import { AdminGuard } from '@/components/admin-guard'
+import { UserManagement } from '@/components/settings/user-management'
+
+export default function SettingsPage() {
+  return (
+    <AdminGuard>
+      <UserManagement />
+    </AdminGuard>
+  )
+}
+```
+
+---
+
+## Convex Server-Side Role Enforcement
+
+All mutations validate the caller's role **server-side** before executing. Never rely solely on client guards.
+
+### Auth Helper (`convex/lib/auth.ts`)
+
+```ts
+import { QueryCtx, MutationCtx } from '../_generated/server'
+
+export async function requireRole(
+  ctx: QueryCtx | MutationCtx,
+  allowedRoles: string[],
+) {
+  const identity = await ctx.auth.getUserIdentity()
+
+  if (!identity) {
+    throw new Error('Unauthenticated')
+  }
+
+  const role = identity.role as string | undefined
+
+  if (!role || !allowedRoles.includes(role)) {
+    throw new Error(`Forbidden: requires one of [${allowedRoles.join(', ')}]`)
+  }
+
+  return identity
+}
+```
+
+### Example: Admin-Only Mutation (`convex/users.ts`)
+
+```ts
+import { mutation, query } from './_generated/server'
+import { v } from 'convex/values'
+import { requireRole } from './lib/auth'
+
+// Only admins can update user roles
+export const updateUserRole = mutation({
+  args: {
+    userId: v.id('users'),
+    role: v.union(
+      v.literal('admin'),
+      v.literal('manager'),
+      v.literal('viewer'),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, ['admin'])
+
+    await ctx.db.patch(args.userId, { role: args.role })
+  },
+})
+
+// Admins and managers can view all users
+export const listUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, ['admin', 'manager'])
+    return await ctx.db.query('users').collect()
+  },
+})
+```
+
+### Example: Manager + Admin Mutation (`convex/sales.ts`)
+
+```ts
+import { mutation } from './_generated/server'
+import { v } from 'convex/values'
+import { requireRole } from './lib/auth'
+
+export const createSale = mutation({
+  args: {
+    productId: v.id('products'),
+    qty: v.number(),
+    sellingPrice: v.number(),
+    discount: v.optional(v.number()),
+    date: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, ['admin', 'manager'])
+
+    // Fetch product to get unit cost for COGS
+    const product = await ctx.db.get(args.productId)
+    if (!product) throw new Error('Product not found')
+    if (product.qty < args.qty) throw new Error('Insufficient stock')
+
+    const cogs = product.unitCost * args.qty
+    const revenue = args.sellingPrice * args.qty - (args.discount ?? 0)
+
+    // Deduct stock
+    await ctx.db.patch(args.productId, { qty: product.qty - args.qty })
+
+    // Record sale
+    return await ctx.db.insert('sales', {
+      productId: args.productId,
+      qty: args.qty,
+      sellingPrice: args.sellingPrice,
+      discount: args.discount ?? 0,
+      cogs,
+      revenue,
+      date: args.date,
+      createdAt: Date.now(),
+    })
+  },
+})
+```
+
+---
+
+## Session Usage in Components
+
+```tsx
+'use client'
+
+import { useSession } from '@/lib/auth-client'
+
+export function UserRoleBadge() {
+  const { data: session } = useSession()
+
+  if (!session) return null
+
+  const role = session.user.role as string
+
+  const colors: Record<string, string> = {
+    admin: 'bg-primary text-primary-foreground',
+    manager: 'bg-accent text-accent-foreground',
+    viewer: 'bg-muted text-muted-foreground',
+  }
+
+  return (
+    <span
+      className={`px-2 py-0.5 rounded text-xs font-medium ${colors[role] ?? colors.viewer}`}
+    >
+      {role}
+    </span>
+  )
+}
+```
+
+---
+
+## Convex Schema (`convex/schema.ts`)
+
+```ts
+import { defineSchema, defineTable } from 'convex/server'
+import { v } from 'convex/values'
+
+export default defineSchema({
+  users: defineTable({
+    email: v.string(),
+    name: v.string(),
+    role: v.union(
+      v.literal('admin'),
+      v.literal('manager'),
+      v.literal('viewer'),
+    ),
+    createdAt: v.number(),
+  }).index('by_email', ['email']),
+
+  products: defineTable({
+    sku: v.string(),
+    name: v.string(),
+    category: v.string(),
+    unit: v.string(),
+    unitCost: v.number(),
+    qty: v.number(),
+    reorderLevel: v.number(),
+    updatedAt: v.number(),
+  }).index('by_category', ['category']),
+
+  purchases: defineTable({
+    productId: v.id('products'),
+    qty: v.number(),
+    unitCost: v.number(),
+    totalCost: v.number(),
+    supplier: v.string(),
+    invoiceNo: v.optional(v.string()),
+    date: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  }).index('by_date', ['date']),
+
+  sales: defineTable({
+    productId: v.id('products'),
+    qty: v.number(),
+    sellingPrice: v.number(),
+    discount: v.number(),
+    cogs: v.number(),
+    revenue: v.number(),
+    date: v.number(),
+    voided: v.optional(v.boolean()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  }).index('by_date', ['date']),
+
+  operatingExpenses: defineTable({
+    category: v.string(),
+    amount: v.number(),
+    description: v.string(),
+    date: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  }).index('by_date', ['date']),
+
+  otherIncome: defineTable({
+    source: v.string(),
+    amount: v.number(),
+    notes: v.optional(v.string()),
+    date: v.number(),
+    createdAt: v.number(),
+  }).index('by_date', ['date']),
+})
+```
+
+---
+
+## Environment Variables (`.env.local`)
+
+```bash
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Convex
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+CONVEX_DEPLOY_KEY=your-convex-deploy-key
+
+# Better Auth
+BETTER_AUTH_SECRET=your-secret-min-32-chars
+BETTER_AUTH_URL=http://localhost:3000
+
+# OAuth (optional)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+---
+
+## Quick Reference: Role Access Matrix
+
+| Action               | admin | manager | viewer |
+| -------------------- | :---: | :-----: | :----: |
+| View stock           |  ✅   |   ✅    |   ✅   |
+| Add / edit products  |  ✅   |   ✅    |   ❌   |
+| Record purchase      |  ✅   |   ✅    |   ❌   |
+| Record sale          |  ✅   |   ✅    |   ❌   |
+| Void / refund sale   |  ✅   |   ✅    |   ❌   |
+| Add OpEx entry       |  ✅   |   ✅    |   ❌   |
+| View P&L report      |  ✅   |   ✅    |   ✅   |
+| Export reports       |  ✅   |   ✅    |   ✅   |
+| Manage users         |  ✅   |   ❌    |   ❌   |
+| Change user roles    |  ✅   |   ❌    |   ❌   |
+| Configure thresholds |  ✅   |   ❌    |   ❌   |
+
+---
+
+## Financial Formulas Reference
+
+```
+Revenue           = Σ (Selling Price × Qty Sold)
+COGS (HPP)        = Σ (Unit Cost × Qty Sold)          ← gross price / total capital
+Gross Profit      = Revenue − COGS                     ← excludes OpEx (ex-HPP)
+Operating Income  = Gross Profit − Operating Expenses
+Profit Before Tax = Operating Income + Other Income
+Net Profit / Loss = Profit Before Tax − Tax
+```
+
+---
+
+_CRM Dashboard · Project Brief v1.0 · 2026 · Confidential_
