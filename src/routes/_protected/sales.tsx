@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, startOfDay, endOfDay } from 'date-fns'
@@ -69,7 +69,7 @@ export const Route = createFileRoute('/_protected/sales')({
 
 const saleSchema = z.object({
   productId: z.string().min(1, 'Product is required'),
-  date: z.date({ required_error: 'Date is required' }),
+  date: z.date(),
   qty: z.coerce.number().int('Must be a whole number').min(1, 'Must be at least 1'),
   sellingPrice: z.coerce.number().min(0, 'Must be ≥ 0'),
   discount: z.coerce.number().min(0, 'Must be ≥ 0'),
@@ -132,7 +132,7 @@ function RecordSaleSheet({ open, onClose }: { open: boolean; onClose: () => void
   const createSale = useMutation(api.sales.createSale)
 
   const form = useForm<SaleFormData>({
-    resolver: zodResolver(saleSchema),
+    resolver: zodResolver(saleSchema) as Resolver<SaleFormData>,
     defaultValues: { productId: '', date: new Date(), qty: 1, sellingPrice: 0, discount: 0 },
   })
 
@@ -142,6 +142,14 @@ function RecordSaleSheet({ open, onClose }: { open: boolean; onClose: () => void
   const discount = Number(form.watch('discount') ?? 0)
 
   const selectedProduct = products?.find((p) => p._id === selectedProductId)
+
+  // Auto-populate selling price from product catalogue when product changes
+  useEffect(() => {
+    if (selectedProduct?.sellingPrice != null) {
+      form.setValue('sellingPrice', selectedProduct.sellingPrice)
+    }
+  }, [selectedProductId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const cogs = (selectedProduct?.unitCost ?? 0) * qty
   const revenue = sellingPrice * qty - discount
 
@@ -513,7 +521,7 @@ function SalesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((s) => (
+              {paginated.map((s) => (
                 <TableRow
                   key={s._id}
                   className={s.voided ? 'opacity-50' : undefined}
@@ -558,6 +566,22 @@ function SalesPage() {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <p>
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              <ChevronLeftIcon className="size-4 mr-1" />Previous
+            </Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+              Next<ChevronRightIcon className="size-4 ml-1" />
+            </Button>
+          </div>
         </div>
       )}
 

@@ -44,7 +44,7 @@ function ProtectedLayout() {
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
-      <main className="md:pl-60">
+      <main className="md:pl-60 print:pl-0">
         <Outlet />
       </main>
     </div>

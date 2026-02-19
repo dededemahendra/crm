@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, startOfDay, endOfDay } from 'date-fns'
@@ -42,7 +42,7 @@ const incomeSchema = z.object({
   source: z.string().min(1, 'Source is required'),
   amount: z.coerce.number().min(0.01, 'Must be > 0'),
   notes: z.string().optional(),
-  date: z.date({ required_error: 'Date is required' }),
+  date: z.date(),
 })
 
 type IncomeFormData = z.infer<typeof incomeSchema>
@@ -91,7 +91,7 @@ function IncomeSheet({
   const updateOtherIncome = useMutation(api.income.updateOtherIncome)
 
   const form = useForm<IncomeFormData>({
-    resolver: zodResolver(incomeSchema),
+    resolver: zodResolver(incomeSchema) as Resolver<IncomeFormData>,
     defaultValues: { source: '', amount: 0, notes: '', date: new Date() },
   })
 
@@ -148,7 +148,7 @@ function IncomeSheet({
           </SheetDescription>
         </SheetHeader>
         <Form {...form}>
-          <form onSubmit={(e) => { void form.handleSubmit(onSubmit)(e) }} className="flex flex-col gap-4 flex-1 py-4">
+          <form onSubmit={(e) => { void form.handleSubmit(onSubmit)(e) }} className="flex flex-col gap-4 flex-1 px-4 py-4">
             <FormField control={form.control} name="source" render={({ field }) => (
               <FormItem>
                 <FormLabel>Source</FormLabel>

@@ -7,7 +7,7 @@ import {
   startOfMonth, endOfMonth,
   startOfYear, endOfYear,
 } from 'date-fns'
-import { CalendarIcon, DownloadIcon, BarChart3Icon } from 'lucide-react'
+import { CalendarIcon, DownloadIcon, BarChart3Icon, PrinterIcon } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -305,14 +305,20 @@ function ReportsPage() {
           <h1 className="text-2xl font-bold">Reports</h1>
           <p className="text-muted-foreground text-sm mt-1">{periodLabel}</p>
         </div>
-        <Button variant="outline" onClick={handleExport} disabled={!metrics} className="shrink-0">
-          <DownloadIcon className="size-4 mr-2" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2 print:hidden">
+          <Button variant="outline" onClick={() => window.print()} disabled={!metrics} className="shrink-0">
+            <PrinterIcon className="size-4 mr-2" />
+            Print
+          </Button>
+          <Button variant="outline" onClick={handleExport} disabled={!metrics} className="shrink-0">
+            <DownloadIcon className="size-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Period selector */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 print:hidden">
         {(['today', 'month', 'year', 'custom'] as Period[]).map((p) => (
           <Button
             key={p}

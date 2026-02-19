@@ -22,6 +22,7 @@ export default defineSchema({
     category: v.string(),
     unit: v.string(),
     unitCost: v.number(),
+    sellingPrice: v.optional(v.number()),
     qty: v.number(),
     reorderLevel: v.number(),
     updatedAt: v.number(),

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, startOfDay, endOfDay } from 'date-fns'
@@ -64,7 +64,7 @@ export const Route = createFileRoute('/_protected/purchases')({
 
 const purchaseSchema = z.object({
   productId: z.string().min(1, 'Product is required'),
-  date: z.date({ required_error: 'Date is required' }),
+  date: z.date(),
   qty: z.coerce
     .number()
     .int('Must be a whole number')
@@ -97,7 +97,7 @@ function RecordPurchaseSheet({
   const createPurchase = useMutation(api.purchases.createPurchase)
 
   const form = useForm<PurchaseFormData>({
-    resolver: zodResolver(purchaseSchema),
+    resolver: zodResolver(purchaseSchema) as Resolver<PurchaseFormData>,
     defaultValues: {
       productId: '',
       date: new Date(),

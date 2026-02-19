@@ -8,7 +8,6 @@ import {
   Receipt,
   CircleDollarSign,
   BarChart3,
-  Users,
   CoffeeIcon,
   LogOut,
   Menu,
@@ -185,12 +184,12 @@ export function AppSidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 w-60 flex-col z-30 border-r border-sidebar-border">
+      <aside className="hidden md:flex print:hidden fixed inset-y-0 left-0 w-60 flex-col z-30 border-r border-sidebar-border">
         <SidebarContent role={role} />
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-background border-b">
+      <header className="md:hidden print:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-background border-b">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="size-9">

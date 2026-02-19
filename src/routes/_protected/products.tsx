@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -58,6 +58,7 @@ const productSchema = z.object({
   category: z.string().min(1, 'Category is required'),
   unit: z.string().min(1, 'Unit is required'),
   unitCost: z.coerce.number().min(0, 'Must be ≥ 0'),
+  sellingPrice: z.coerce.number().min(0, 'Must be ≥ 0').optional(),
   qty: z.coerce.number().int('Must be a whole number').min(0, 'Must be ≥ 0'),
   reorderLevel: z.coerce
     .number()
@@ -74,6 +75,7 @@ type Product = {
   category: string
   unit: string
   unitCost: number
+  sellingPrice?: number
   qty: number
   reorderLevel: number
   updatedAt: number
@@ -205,7 +207,7 @@ function ProductForm({
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="unitCost"
@@ -219,6 +221,22 @@ function ProductForm({
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="sellingPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Selling Price <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} step="any" placeholder="0" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="qty"
@@ -247,6 +265,7 @@ function ProductForm({
           />
         </div>
 
+
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
@@ -271,13 +290,14 @@ function AddProductDialog({
 }) {
   const createProduct = useMutation(api.products.createProduct)
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as Resolver<ProductFormData>,
     defaultValues: {
       sku: '',
       name: '',
       category: '',
       unit: '',
       unitCost: 0,
+      sellingPrice: undefined,
       qty: 0,
       reorderLevel: 10,
     },
@@ -328,7 +348,7 @@ function EditProductDialog({
 }) {
   const updateProduct = useMutation(api.products.updateProduct)
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as Resolver<ProductFormData>,
     values: product
       ? {
           sku: product.sku,
@@ -336,6 +356,7 @@ function EditProductDialog({
           category: product.category,
           unit: product.unit,
           unitCost: product.unitCost,
+          sellingPrice: product.sellingPrice,
           qty: product.qty,
           reorderLevel: product.reorderLevel,
         }
@@ -585,6 +606,8 @@ function ProductsTable({
             <TableHead>Category</TableHead>
             <TableHead>Unit</TableHead>
             <TableHead className="text-right">Unit Cost</TableHead>
+            <TableHead className="text-right">Sell Price</TableHead>
+            <TableHead className="text-right">Margin</TableHead>
             <TableHead className="text-right">Qty</TableHead>
             <TableHead className="text-right">Reorder Level</TableHead>
             {(canEdit || canDelete) && (
@@ -615,6 +638,22 @@ function ProductsTable({
                 <TableCell className="text-muted-foreground">{p.unit}</TableCell>
                 <TableCell className="text-right tabular-nums">
                   {fmtNumber(p.unitCost)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-muted-foreground">
+                  {p.sellingPrice != null ? fmtNumber(p.sellingPrice) : '—'}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {p.sellingPrice != null && p.sellingPrice > 0 ? (
+                    <span className={
+                      p.sellingPrice > p.unitCost
+                        ? 'text-green-600 dark:text-green-400 font-medium'
+                        : 'text-destructive font-medium'
+                    }>
+                      {Math.round(((p.sellingPrice - p.unitCost) / p.sellingPrice) * 100)}%
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <StockBadge qty={p.qty} reorderLevel={p.reorderLevel} />

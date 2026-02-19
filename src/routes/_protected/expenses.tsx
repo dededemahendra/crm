@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { format, startOfDay, endOfDay } from 'date-fns'
@@ -47,7 +47,7 @@ const expenseSchema = z.object({
   category: z.string().min(1, 'Category is required'),
   amount: z.coerce.number().min(0.01, 'Must be > 0'),
   description: z.string().min(1, 'Description is required'),
-  date: z.date({ required_error: 'Date is required' }),
+  date: z.date(),
 })
 
 type ExpenseFormData = z.infer<typeof expenseSchema>
@@ -98,7 +98,7 @@ function ExpenseSheet({
   const updateOpEx = useMutation(api.expenses.updateOpEx)
 
   const form = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema),
+    resolver: zodResolver(expenseSchema) as Resolver<ExpenseFormData>,
     defaultValues: { category: '', amount: 0, description: '', date: new Date() },
   })
 
@@ -144,7 +144,7 @@ function ExpenseSheet({
           </SheetDescription>
         </SheetHeader>
         <Form {...form}>
-          <form onSubmit={(e) => { void form.handleSubmit(onSubmit)(e) }} className="flex flex-col gap-4 flex-1 py-4">
+          <form onSubmit={(e) => { void form.handleSubmit(onSubmit)(e) }} className="flex flex-col gap-4 flex-1 px-4 py-4">
             <FormField control={form.control} name="category" render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>

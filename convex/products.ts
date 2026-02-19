@@ -16,11 +16,17 @@ export const createProduct = mutation({
     category: v.string(),
     unit: v.string(),
     unitCost: v.number(),
+    sellingPrice: v.optional(v.number()),
     qty: v.number(),
     reorderLevel: v.number(),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, ['admin', 'manager'])
+    const existing = await ctx.db
+      .query('products')
+      .filter((q) => q.eq(q.field('sku'), args.sku))
+      .first()
+    if (existing) throw new Error(`SKU "${args.sku}" is already in use`)
     return ctx.db.insert('products', { ...args, updatedAt: Date.now() })
   },
 })
@@ -33,11 +39,18 @@ export const updateProduct = mutation({
     category: v.string(),
     unit: v.string(),
     unitCost: v.number(),
+    sellingPrice: v.optional(v.number()),
     qty: v.number(),
     reorderLevel: v.number(),
   },
   handler: async (ctx, { id, ...fields }) => {
     await requireRole(ctx, ['admin', 'manager'])
+    const existing = await ctx.db
+      .query('products')
+      .filter((q) => q.eq(q.field('sku'), fields.sku))
+      .first()
+    if (existing && existing._id !== id)
+      throw new Error(`SKU "${fields.sku}" is already in use`)
     await ctx.db.patch(id, { ...fields, updatedAt: Date.now() })
   },
 })
